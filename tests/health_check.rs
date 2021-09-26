@@ -1,5 +1,5 @@
 fn spawn_app() {
-    let server = zero2prod::run().expect("Cannot start server");
+    let server = null_to_prod::run("127.0.0.1:0").expect("Cannot start server");
     let _ = tokio::spawn(server);
 }
 
@@ -14,5 +14,5 @@ async fn health_check_works() {
         .await
         .expect("Failed to execute request");
     assert_eq!(response.status(), reqwest::StatusCode::OK);
-    assert_eq!(Some(0), response.content_length());
+    assert_eq!(Some(2), response.content_length());
 }
