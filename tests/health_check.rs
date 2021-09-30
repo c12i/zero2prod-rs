@@ -44,17 +44,17 @@ async fn subscribe_returns_400_when_data_is_missing() {
     let test_cases = vec![
         ("name=le%20guin", "missing the email"),
         ("name=urslula_leguin%40gmail", "missing name"),
-        ("", "missing both name and email")
+        ("", "missing both name and email"),
     ];
     for (invalid_body, error_message) in test_cases {
         // act
         let respose = client
             .post(&format!("{}/subscriptions", &app_address))
-        .header("Content-Type", "application/x-www-form-urlencoded")
-        .body(invalid_body)
-        .send()
-        .await
-        .expect("Filed to execute request");
+            .header("Content-Type", "application/x-www-form-urlencoded")
+            .body(invalid_body)
+            .send()
+            .await
+            .expect("Filed to execute request");
         assert_eq!(
             400,
             respose.status().as_u16(),
