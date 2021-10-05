@@ -1,5 +1,6 @@
-use null_to_prod::run;
 use std::net::TcpListener;
+
+use null_to_prod::run;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
