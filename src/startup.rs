@@ -1,9 +1,8 @@
 use std::net::TcpListener;
 
-use actix_web::{App, HttpServer, dev::Server, web};
+use actix_web::{dev::Server, web, App, HttpServer};
 
 use super::{health_check, subscribe};
-
 
 pub fn run(listener: TcpListener) -> Result<Server, std::io::Error> {
     let server = HttpServer::new(|| {
