@@ -1,5 +1,5 @@
 [package]
-name = "null_to_prod"
+name = "n2p"
 version = "0.1.0"
 authors = ["Collins Muriuki <hello@collinsmuriuki.xyz>"]
 edition = "2018"
@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
-name = "null_to_prod"
+name = "c2p"
 
 [dependencies]
 actix-web = "=4.0.0-beta.5"

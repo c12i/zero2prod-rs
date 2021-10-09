@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 
-use null_to_prod::get_configuration;
+use n2p::get_configuration;
 use sqlx::PgPool;
 
 struct TestApp {
