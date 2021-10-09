@@ -23,7 +23,9 @@ pub async fn subscribe(
         form.name,
         chrono::Utc::now()
     )
-    .execute(connection_pool.get_ref()).await {
+    .execute(connection_pool.get_ref())
+    .await
+    {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(e) => {
             eprintln!("Failed to execute query: {}", e);

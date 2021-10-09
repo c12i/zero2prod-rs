@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 
 use null_to_prod::{get_configuration, run};
-use sqlx::{Connection, PgConnection, PgPool};
+use sqlx::PgPool;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
