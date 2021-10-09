@@ -23,7 +23,7 @@ async fn spawn_app() -> TestApp {
         .await
         .expect("Error connecting to Postgres");
     let server =
-        null_to_prod::run(listener, db_connection_pool.clone()).expect("Cannot start server");
+        n2p::run(listener, db_connection_pool.clone()).expect("Cannot start server");
     let _ = tokio::spawn(server);
     let address = format!("http://127.0.0.1:{}", port);
     TestApp::new(address, db_connection_pool)
