@@ -2,6 +2,6 @@ mod configuration;
 mod routes;
 mod startup;
 
-pub use configuration::get_configuration;
+pub use configuration::{get_configuration, DatabaseSettings};
 use routes::{health_check, subscribe};
 pub use startup::run;

@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 
-use n2p::get_configuration;
-use sqlx::PgPool;
+use n2p::{get_configuration, DatabaseSettings};
+use sqlx::{PgPool, PgConnection, Executor, Connection};
 
 struct TestApp {
     pub address: String,
@@ -16,17 +16,41 @@ impl TestApp {
 
 // spawn app and return bound TCP address
 async fn spawn_app() -> TestApp {
-    let config = get_configuration().expect("Error reading configurations");
+    let mut config = get_configuration().expect("Error reading configurations");
     let listener = TcpListener::bind("127.0.0.1:0").expect("Cannot bind to TCP listener");
     let port = listener.local_addr().unwrap().port();
-    let db_connection_pool = PgPool::connect(&config.database.get_connection_string())
-        .await
-        .expect("Error connecting to Postgres");
+
+    // test db config
+    // overriding database name to a randonm uuid
+    config.database.database_name = uuid::Uuid::new_v4().to_string();
+    let db_connection_pool = configure_database(&config.database).await;
     let server =
         n2p::run(listener, db_connection_pool.clone()).expect("Cannot start server");
     let _ = tokio::spawn(server);
     let address = format!("http://127.0.0.1:{}", port);
     TestApp::new(address, db_connection_pool)
+}
+
+pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
+    // Create database
+    let mut connection = PgConnection::connect(&config.get_connection_string_without_db())
+        .await
+        .expect("Failed to connect to Postgres");
+    connection
+        .execute(&*format!(r#"CREATE DATABASE "{}";"#, config.database_name))
+        .await
+        .expect("Failed to create database.");
+
+    // Migrate database
+    let connection_pool = PgPool::connect(&config.get_connection_string())
+        .await
+        .expect("Failed to connect to Postgres.");
+    sqlx::migrate!("./migrations")
+        .run(&connection_pool)
+        .await
+        .expect("Failed to migrate the database");
+
+    connection_pool
 }
 
 #[actix_rt::test]
