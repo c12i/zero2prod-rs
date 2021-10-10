@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 
 use n2p::{get_configuration, DatabaseSettings};
-use sqlx::{PgPool, PgConnection, Executor, Connection};
+use sqlx::{Connection, Executor, PgConnection, PgPool};
 
 struct TestApp {
     pub address: String,
@@ -24,8 +24,7 @@ async fn spawn_app() -> TestApp {
     // overriding database name to a randonm uuid
     config.database.database_name = uuid::Uuid::new_v4().to_string();
     let db_connection_pool = configure_database(&config.database).await;
-    let server =
-        n2p::run(listener, db_connection_pool.clone()).expect("Cannot start server");
+    let server = n2p::run(listener, db_connection_pool.clone()).expect("Cannot start server");
     let _ = tokio::spawn(server);
     let address = format!("http://127.0.0.1:{}", port);
     TestApp::new(address, db_connection_pool)
