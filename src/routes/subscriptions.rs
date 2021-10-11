@@ -15,7 +15,7 @@ pub async fn subscribe(
 ) -> HttpResponse {
     let FormData { name, email } = form.0;
     let request_id = uuid::Uuid::new_v4();
-    log::info!(
+    tracing::info!(
         "request_id: {}; saving new subscriber with name: {} and email: {} to the database",
         request_id,
         name,
@@ -35,14 +35,14 @@ pub async fn subscribe(
     .await
     {
         Ok(_) => {
-            log::info!(
+            tracing::info!(
                 "request_id: {}; new subscriber details have been saved",
                 request_id
             );
             HttpResponse::Ok().finish()
         }
         Err(e) => {
-            log::error!("Failed to execute query: {:?}", e);
+            tracing::error!("Failed to execute query: {:?}", e);
             HttpResponse::InternalServerError().finish()
         }
     }
