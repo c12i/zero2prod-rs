@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 
-use z2p::{get_configuration, DatabaseSettings};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
+use z2p::{get_configuration, DatabaseSettings};
 
 struct TestApp {
     pub address: String,

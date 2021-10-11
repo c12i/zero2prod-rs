@@ -1,8 +1,8 @@
-use std::net::TcpListener;
 use env_logger::Env;
+use std::net::TcpListener;
 
-use z2p::{get_configuration, run};
 use sqlx::PgPool;
+use z2p::{get_configuration, run};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {

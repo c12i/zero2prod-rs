@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 
-use actix_web::{dev::Server, web, App, HttpServer};
 use actix_web::middleware::Logger;
+use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::PgPool;
 
 use super::{health_check, subscribe};
