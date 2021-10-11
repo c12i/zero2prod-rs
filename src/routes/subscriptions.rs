@@ -35,7 +35,10 @@ pub async fn subscribe(
     .await
     {
         Ok(_) => {
-            log::info!("request_id: {}; new subscriber details have been saved", request_id);
+            log::info!(
+                "request_id: {}; new subscriber details have been saved",
+                request_id
+            );
             HttpResponse::Ok().finish()
         }
         Err(e) => {
