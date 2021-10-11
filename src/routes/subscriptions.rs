@@ -14,8 +14,10 @@ pub async fn subscribe(
     connection_pool: web::Data<PgPool>,
 ) -> HttpResponse {
     let FormData { name, email } = form.0;
+    let request_id = uuid::Uuid::new_v4();
     log::info!(
-        "Saving new subscriber with name: {} and email: {} to the database",
+        "request_id: {}; saving new subscriber with name: {} and email: {} to the database",
+        request_id,
         name,
         email
     );
@@ -33,7 +35,7 @@ pub async fn subscribe(
     .await
     {
         Ok(_) => {
-            log::info!("New subscriber details have been saved");
+            log::info!("request_id: {}; new subscriber details have been saved", request_id);
             HttpResponse::Ok().finish()
         }
         Err(e) => {
