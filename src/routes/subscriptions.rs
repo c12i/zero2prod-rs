@@ -15,12 +15,15 @@ pub async fn subscribe(
 ) -> HttpResponse {
     let FormData { name, email } = form.0;
     let request_id = uuid::Uuid::new_v4();
-    tracing::info!(
-        "request_id: {}; saving new subscriber with name: {} and email: {} to the database",
-        request_id,
-        name,
-        email
+    // creae span at info level
+    let request_span = tracing::info_span!(
+        "Adding a new subscriber.",
+        %request_id, // %: use Display implementation
+        subscriber_name = %name,
+        subscriber_email = %email
     );
+    // XXX: calling `enter` in an async function, not good
+    let _request_span_guard = request_span.enter();
     match sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
