@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 
-use n2p::{get_configuration, DatabaseSettings};
+use z2p::{get_configuration, DatabaseSettings};
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 
 struct TestApp {

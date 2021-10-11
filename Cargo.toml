@@ -1,5 +1,5 @@
 [package]
-name = "n2p"
+name = "z2p"
 version = "0.1.0"
 authors = ["Collins Muriuki <hello@collinsmuriuki.xyz>"]
 edition = "2018"
@@ -9,7 +9,7 @@ path = "src/lib.rs"
 
 [[bin]]
 path = "src/main.rs"
-name = "c2p"
+name = "z2p"
 
 [dependencies]
 actix-web = "=4.0.0-beta.5"
@@ -19,6 +19,7 @@ serde={version="1", features=["derive"]}
 config = "0.11.0"
 uuid = {version = "0.8.1", features = ["v4"]}
 chrono = "0.4.15"
+env_logger = "0.9.0"
 
 [dependencies.sqlx]
 version = "0.5.7"

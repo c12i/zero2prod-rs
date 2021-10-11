@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 
-use n2p::{get_configuration, run};
+use z2p::{get_configuration, run};
 use sqlx::PgPool;
 
 #[actix_web::main]
