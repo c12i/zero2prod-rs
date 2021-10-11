@@ -30,7 +30,7 @@ pub async fn subscribe(
         Ok(_) => {
             log::info!("New subscriber details have been saved");
             HttpResponse::Ok().finish()
-        },
+        }
         Err(e) => {
             log::error!("Failed to execute query: {:?}", e);
             HttpResponse::InternalServerError().finish()
