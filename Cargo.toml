@@ -25,6 +25,7 @@ tracing-bunyan-formatter = "0.2.6"
 tracing-subscriber = {version="0.2.12", features=["env-filter", "registry"]}
 tracing-futures = "0.2.5"
 uuid = {version = "0.8.1", features = ["v4"]}
+tracing-log = "0.1.2"
 
 [dependencies.sqlx]
 version = "0.5.7"

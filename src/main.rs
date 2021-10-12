@@ -2,6 +2,7 @@ use std::net::TcpListener;
 use tracing::subscriber::set_global_default;
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_subscriber::{layer::SubscriberExt, EnvFilter, Registry};
+use tracing_log::LogTracer;
 
 use sqlx::PgPool;
 use z2p::{get_configuration, run};
@@ -19,6 +20,8 @@ async fn main() -> std::io::Result<()> {
         .with(formatting_layer);
     // `set_global_default` can be used by applications to specify what subscriber should be used to process spans
     set_global_default(subscriber).expect("Error getting subscriber");
+    // redirect all Actix web `log` events to subscriber
+    LogTracer::init().expect("Error setting logger");
     let config = get_configuration().expect("Error reading configurations");
     let listener = TcpListener::bind(format!("127.0.0.1:{}", config.application_port))?;
     let db_connection_pool = PgPool::connect(&config.database.get_connection_string())
