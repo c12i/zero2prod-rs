@@ -4,7 +4,6 @@ use sqlx::PgPool;
 use tracing_futures::Instrument;
 
 #[derive(Deserialize)]
-#[allow(unused)]
 pub struct FormData {
     name: String,
     email: String,
