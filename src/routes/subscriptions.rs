@@ -1,7 +1,6 @@
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use sqlx::PgPool;
-use tracing_futures::Instrument;
 
 #[derive(Deserialize)]
 pub struct FormData {
@@ -9,46 +8,45 @@ pub struct FormData {
     email: String,
 }
 
+#[tracing::instrument(
+    name = "Adding a new subscriber",
+    skip(form, connection_pool),
+    fields(
+        request_id = %uuid::Uuid::new_v4(),
+        subsciber_email = %form.email,
+        subsciber_name = %form.name
+    )
+)]
 pub async fn subscribe(
     form: web::Form<FormData>,
     connection_pool: web::Data<PgPool>,
 ) -> HttpResponse {
-    let FormData { name, email } = form.0;
-    let request_id = uuid::Uuid::new_v4();
-    // creae span at info level
-    let request_span = tracing::info_span!(
-        "Adding a new subscriber.",
-        %request_id, // %: use Display implementation
-        subscriber_name = %name,
-        subscriber_email = %email
-    );
-    // XXX: calling `enter` in an async function, not good
-    let _request_span_guard = request_span.enter();
-    let query_span = tracing::info_span!("Saving new subscriber details in the database");
-    match sqlx::query!(
+    match insert_subscriber(&connection_pool, &form).await {
+        Ok(_) => HttpResponse::Ok().finish(),
+        Err(_) => HttpResponse::InternalServerError().finish(),
+    }
+}
+
+#[tracing::instrument(
+    name = "Saving new subscriber details to database",
+    skip(form, connection_pool)
+)]
+async fn insert_subscriber(connection_pool: &PgPool, form: &FormData) -> Result<(), sqlx::Error> {
+    sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
         VALUES ($1, $2, $3, $4)
         "#,
         uuid::Uuid::new_v4(),
-        email,
-        name,
+        form.email,
+        form.name,
         chrono::Utc::now()
     )
-    .execute(connection_pool.as_ref())
-    .instrument(query_span)
+    .execute(connection_pool)
     .await
-    {
-        Ok(_) => {
-            tracing::info!(
-                "request_id: {}; new subscriber details have been saved",
-                request_id
-            );
-            HttpResponse::Ok().finish()
-        }
-        Err(e) => {
-            tracing::error!("Failed to execute query: {:?}", e);
-            HttpResponse::InternalServerError().finish()
-        }
-    }
+    .map_err(|e| {
+        tracing::error!("Error executingg query: {:?}", e);
+        e
+    })?;
+    Ok(())
 }
