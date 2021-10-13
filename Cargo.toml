@@ -30,7 +30,8 @@ version = "0.5.7"
 default-features = false
 features = [
     "runtime-actix-rustls", 
-    "macros", 
+    "macros",
+    "offline",
     "postgres", 
     "uuid", 
     "chrono", 
