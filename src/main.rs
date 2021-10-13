@@ -1,7 +1,9 @@
 use sqlx::PgPool;
+use z2p::run;
+use z2p::telemetry::{get_subscriber, initialize_subscriber};
+use z2p::configuration::get_configuration;
 use std::net::TcpListener;
 
-use z2p::{get_configuration, get_subscriber, initialize_subscriber, run};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
