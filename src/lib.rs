@@ -1,7 +1,7 @@
 mod configuration;
+pub mod routes;
 mod startup;
 mod telemetry;
-pub mod routes;
 
 pub use configuration::{get_configuration, DatabaseSettings};
 pub use startup::run;
