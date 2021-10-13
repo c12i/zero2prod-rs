@@ -1,7 +1,8 @@
 mod configuration;
-mod routes;
 mod startup;
+mod telemetry;
+pub mod routes;
 
 pub use configuration::{get_configuration, DatabaseSettings};
-use routes::{health_check, subscribe};
 pub use startup::run;
+pub use telemetry::{get_subscriber, initialize_subscriber};

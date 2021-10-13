@@ -4,7 +4,7 @@ use actix_web::middleware::Logger;
 use actix_web::{dev::Server, web, App, HttpServer};
 use sqlx::PgPool;
 
-use super::{health_check, subscribe};
+use crate::routes::{health_check, subscribe};
 
 pub fn run(listener: TcpListener, db_connection_pool: PgPool) -> Result<Server, std::io::Error> {
     let db_connection_pool = web::Data::new(db_connection_pool);
