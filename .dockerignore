@@ -1,3 +1,7 @@
-/target
+.env
 /.github
+/target
+/tests
 Dockerfile
+/scripts
+/migrations
