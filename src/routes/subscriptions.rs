@@ -16,6 +16,7 @@ pub struct FormData {
         subsciber_name = %form.name
     )
 )]
+#[allow(clippy::async_yields_async)]
 pub async fn subscribe(
     form: web::Form<FormData>,
     connection_pool: web::Data<PgPool>,
