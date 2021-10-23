@@ -34,6 +34,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v2
+
       - name: Cache dependencies
         id: cache-dependencies
         uses: actions/cache@v2
@@ -43,6 +44,7 @@ jobs:
             ~/.cargo/git
             target
           key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Install stable toolchain
         uses: actions-rs/toolchain@v1
         with:
@@ -70,12 +72,16 @@ jobs:
             --features=${{ env.SQLX_FEATURES }}
             --no-default-features
             --locked
+
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
           SKIP_DOCKER=true ./scripts/init_db.sh
+
       - name: Check sqlx metadata file
-        run: cargo sqlx prepare --check -- --bin z2p
+        run: |
+          cargo sqlx prepare --check -- --bin z2p
+
       - name: Run cargo test
         uses: actions-rs/cargo@v1
         with:
@@ -142,10 +148,12 @@ jobs:
             --features=${{ env.SQLX_FEATURES }}
             --no-default-features
             --locked
+
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
           SKIP_DOCKER=true ./scripts/init_db.sh
+
       - name: Run clippy
         uses: actions-rs/clippy-check@v1
         with:
@@ -197,10 +205,12 @@ jobs:
             --features=${{ env.SQLX_FEATURES }}
             --no-default-features
             --locked
+
       - name: Migrate database
         run: |
           sudo apt-get install libpq-dev -y
           SKIP_DOCKER=true ./scripts/init_db.sh
+
       - name: Run cargo-tarpaulin
         uses: actions-rs/tarpaulin@v0.1
         with:
