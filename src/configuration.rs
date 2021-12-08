@@ -1,6 +1,6 @@
 use serde::Deserialize;
 use serde_aux::field_attributes::deserialize_number_from_string;
-use sqlx::postgres::PgConnectOptions;
+use sqlx::postgres::{PgConnectOptions, PgSslMode};
 use std::convert::{TryFrom, TryInto};
 
 #[derive(Deserialize)]
@@ -18,6 +18,8 @@ pub struct DatabaseSettings {
     pub port: u16,
     pub host: String,
     pub database_name: String,
+    // Determine if connection is to be encrypted
+    pub require_ssl: bool,
 }
 
 #[derive(Deserialize)]
@@ -56,6 +58,7 @@ impl TryFrom<String> for Environment {
 }
 
 impl DatabaseSettings {
+    #[deprecated]
     pub fn get_connection_string(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}/{}",
@@ -63,6 +66,7 @@ impl DatabaseSettings {
         )
     }
 
+    #[deprecated]
     pub fn get_connection_string_without_db(&self) -> String {
         format!(
             "postgres://{}:{}@{}:{}",
@@ -73,11 +77,18 @@ impl DatabaseSettings {
 
 impl DatabaseSettings {
     pub fn without_db(&self) -> PgConnectOptions {
+        let ssl_mode = if self.require_ssl {
+            PgSslMode::Require
+        } else {
+            // Try encrypted connection and fall back if it fails
+            PgSslMode::Prefer
+        };
         PgConnectOptions::new()
             .host(&self.host)
             .username(&self.username)
             .password(&self.password)
             .port(self.port)
+            .ssl_mode(ssl_mode)
     }
 
     pub fn with_db(&self) -> PgConnectOptions {
