@@ -1,12 +1,15 @@
 .SILENT:
 start-database:
-		./scripts/init_db.sh
+	./scripts/init_db.sh
 
 test:
-		cargo test
+	cargo test
+
+check:
+	cargo check
 
 build-image:
-		docker build -t z2p .
+	docker build -t z2p .
 
 run:
-		cargo run
+	cargo run
