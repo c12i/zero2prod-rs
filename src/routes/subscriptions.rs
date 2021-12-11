@@ -1,7 +1,6 @@
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use sqlx::PgPool;
-use unicode_segmentation::UnicodeSegmentation;
 
 use crate::domain::{NewSubscriber, SubscriberName};
 
