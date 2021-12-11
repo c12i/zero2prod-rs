@@ -51,7 +51,7 @@ async fn insert_subscriber(
         "#,
         uuid::Uuid::new_v4(),
         new_subscriber.email,
-        new_subscriber.name.inner_ref(),
+        new_subscriber.name.as_ref(),
         chrono::Utc::now()
     )
     .execute(connection_pool)
