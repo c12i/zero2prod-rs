@@ -27,7 +27,10 @@ pub async fn subscribe(
     // `form.0` gives us access to the underlying `FormData`
     let new_subscriber = NewSubscriber {
         email: form.0.email,
-        name: SubscriberName::parse(form.0.name).expect("Validation Error"),
+        name: match SubscriberName::parse(form.0.name) {
+            Ok(name) => name,
+            Err(_) => return HttpResponse::BadRequest().finish(),
+        },
     };
     match insert_subscriber(&connection_pool, &new_subscriber).await {
         Ok(_) => HttpResponse::Ok().finish(),
