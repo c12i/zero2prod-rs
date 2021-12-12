@@ -26,6 +26,7 @@ tracing-subscriber = {version="0.2.12", features=["env-filter", "registry"]}
 uuid ={version = "0.8.1", features = ["v4"]}
 serde-aux = "2.3.0"
 unicode-segmentation = "1.8.0"
+validator = "0.14.0"
 
 [dependencies.sqlx]
 version = "0.5.7"
