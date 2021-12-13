@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use sqlx::PgPool;
+use std::convert::{TryFrom, TryInto};
 
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
 
@@ -8,6 +9,18 @@ use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
 pub struct FormData {
     name: String,
     email: String,
+}
+
+impl TryFrom<FormData> for NewSubscriber {
+    type Error = String;
+
+    fn try_from(value: FormData) -> Result<Self, Self::Error> {
+        let new_subscriber = NewSubscriber {
+            email: SubscriberEmail::parse(value.email)?,
+            name: SubscriberName::parse(value.name)?,
+        };
+        Ok(new_subscriber)
+    }
 }
 
 #[tracing::instrument(
@@ -22,7 +35,7 @@ pub async fn subscribe(
 ) -> HttpResponse {
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
-    let new_subscriber = match parse_subscriber(form.0) {
+    let new_subscriber = match form.0.try_into() {
         Ok(sub) => sub,
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
