@@ -13,10 +13,7 @@ pub struct FormData {
 #[tracing::instrument(
     name = "Adding a new subscriber",
     skip(form, connection_pool),
-    fields(
-        subsciber_email = %form.email,
-        subsciber_name = %form.name
-    )
+    fields(subsciber_email = %form.email, subsciber_name = %form.name)
 )]
 #[allow(clippy::async_yields_async)]
 pub async fn subscribe(
