@@ -2,7 +2,7 @@ use actix_web::{web, HttpResponse};
 use serde::Deserialize;
 use sqlx::PgPool;
 
-use crate::domain::{NewSubscriber, SubscriberName};
+use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
 
 #[derive(Deserialize)]
 pub struct FormData {
@@ -26,7 +26,10 @@ pub async fn subscribe(
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
     let new_subscriber = NewSubscriber {
-        email: form.0.email,
+        email: match SubscriberEmail::parse(form.0.email) {
+            Ok(email) => email,
+            Err(_) => return HttpResponse::BadRequest().finish(),
+        },
         name: match SubscriberName::parse(form.0.name) {
             Ok(name) => name,
             Err(_) => return HttpResponse::BadRequest().finish(),
@@ -52,7 +55,7 @@ async fn insert_subscriber(
         VALUES ($1, $2, $3, $4)
         "#,
         uuid::Uuid::new_v4(),
-        new_subscriber.email,
+        new_subscriber.email.as_ref(),
         new_subscriber.name.as_ref(),
         chrono::Utc::now()
     )
