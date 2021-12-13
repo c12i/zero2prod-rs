@@ -22,20 +22,22 @@ pub async fn subscribe(
 ) -> HttpResponse {
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
-    let new_subscriber = NewSubscriber {
-        email: match SubscriberEmail::parse(form.0.email) {
-            Ok(email) => email,
-            Err(_) => return HttpResponse::BadRequest().finish(),
-        },
-        name: match SubscriberName::parse(form.0.name) {
-            Ok(name) => name,
-            Err(_) => return HttpResponse::BadRequest().finish(),
-        },
+    let new_subscriber = match parse_subscriber(form.0) {
+        Ok(sub) => sub,
+        Err(_) => return HttpResponse::BadRequest().finish(),
     };
     match insert_subscriber(&connection_pool, &new_subscriber).await {
         Ok(_) => HttpResponse::Ok().finish(),
         Err(_) => HttpResponse::InternalServerError().finish(),
     }
+}
+
+pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
+    let new_subscriber = NewSubscriber {
+        email: SubscriberEmail::parse(form.email)?,
+        name: SubscriberName::parse(form.name)?,
+    };
+    Ok(new_subscriber)
 }
 
 #[tracing::instrument(
