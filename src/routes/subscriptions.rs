@@ -45,14 +45,6 @@ pub async fn subscribe(
     }
 }
 
-pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String> {
-    let new_subscriber = NewSubscriber {
-        email: SubscriberEmail::parse(form.email)?,
-        name: SubscriberName::parse(form.name)?,
-    };
-    Ok(new_subscriber)
-}
-
 #[tracing::instrument(
     name = "Saving new subscriber details to database",
     skip(new_subscriber, connection_pool)
