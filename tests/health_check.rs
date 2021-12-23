@@ -3,6 +3,7 @@ use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::net::TcpListener;
 
 use z2p::configuration::{get_configuration, DatabaseSettings};
+use z2p::email_client::EmailClient;
 use z2p::telemetry::{get_subscriber, initialize_subscriber};
 
 /// Ensure tracing stack is only initialized once using `once_cell`
@@ -41,8 +42,15 @@ async fn spawn_app() -> TestApp {
     // test db config
     // overriding database name to a randonm uuid
     config.database.database_name = uuid::Uuid::new_v4().to_string();
+    // TODO: Duplicated code; needs refactor
+    let sender_email = config
+        .email_client
+        .sender()
+        .expect("Invalid sender email address");
+    let email_client = EmailClient::new(config.email_client.base_url, sender_email);
     let db_connection_pool = configure_database(&config.database).await;
-    let server = z2p::run(listener, db_connection_pool.clone()).expect("Cannot start server");
+    let server =
+        z2p::run(listener, db_connection_pool.clone(), email_client).expect("Cannot start server");
     let _ = tokio::spawn(server);
     let address = format!("http://127.0.0.1:{}", port);
     TestApp::new(address, db_connection_pool)
