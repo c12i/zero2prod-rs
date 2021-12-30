@@ -11,3 +11,4 @@ database:
 email_client:
   base_url: 'https://api.postmark.com'
   sender_email: 'something@gmail.com'
+  authorization_token: 'my-secret-token'
