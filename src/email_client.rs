@@ -4,12 +4,12 @@ use serde::Serialize;
 
 #[derive(Serialize)]
 #[serde(rename_all = "PascalCase")]
-pub struct SendEmailRequest {
-    from: String,
-    to: String,
-    subject: String,
-    html_body: String,
-    text_body: String,
+pub struct SendEmailRequest<'a> {
+    from: &'a str,
+    to: &'a str,
+    subject: &'a str,
+    html_body: &'a str,
+    text_body: &'a str,
 }
 
 pub struct EmailClient {
@@ -38,11 +38,11 @@ impl EmailClient {
     ) -> Result<(), reqwest::Error> {
         let url = format!("{}/email", self.base_url);
         let request_body = SendEmailRequest {
-            from: self.sender.as_ref().to_owned(),
-            to: recepient.as_ref().to_owned(),
-            subject: subject.to_owned(),
-            html_body: html_content.to_owned(),
-            text_body: text_content.to_owned(),
+            from: self.sender.as_ref(),
+            to: recepient.as_ref(),
+            subject,
+            html_body: html_content,
+            text_body: text_content,
         };
         self.http_client
             .post(&url)
@@ -58,10 +58,11 @@ impl EmailClient {
 mod test {
     use crate::domain::SubscriberEmail;
     use crate::email_client::EmailClient;
+    use claim::assert_ok;
     use fake::faker::internet::en::SafeEmail;
     use fake::faker::lorem::en::{Paragraph, Sentence};
     use fake::{Fake, Faker};
-    use wiremock::matchers::{header, header_exists, method, path};
+    use wiremock::matchers::{any, header, header_exists, method, path};
     use wiremock::Request;
     use wiremock::{Mock, MockServer, ResponseTemplate};
 
@@ -87,7 +88,7 @@ mod test {
     }
 
     #[tokio::test]
-    async fn send_email_fires_a_request_to_base_url() {
+    async fn send_email_sends_the_expected_request() {
         // Arrange
         let mock_server = MockServer::start().await;
         let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
@@ -108,6 +109,30 @@ mod test {
         let _ = email_client
             .send_email(subscriber_email, &subject, &content, &content)
             .await;
+    }
+
+    #[tokio::test]
+    async fn send_email_succeeds_if_the_server_returns_200() {
+        // Arrange
+        let mock_server = MockServer::start().await;
+        let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
+        let email_client = EmailClient::new(mock_server.uri(), sender, Faker.fake());
+        let subscriber_email = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
+        let subject = Sentence(1..2).fake::<String>();
+        let content = Paragraph(1..10).fake::<String>();
+        // We do not copy in all the matchers we have in the other test
+        // The purpose of this test is not to assert the request. We add the bare minumum
+        // needed to trigger the path we want to test in `send_email`
+        Mock::given(any())
+            .respond_with(ResponseTemplate::new(200))
+            .expect(1)
+            .mount(&mock_server)
+            .await;
+        // Act
+        let outcome = email_client
+            .send_email(subscriber_email, &subject, &content, &content)
+            .await;
         // Assert
+        assert_ok!(outcome);
     }
 }
