@@ -2704,6 +2704,7 @@ dependencies = [
  "reqwest",
  "serde 1.0.126",
  "serde-aux",
+ "serde_json",
  "sqlx",
  "tokio",
  "tracing",
