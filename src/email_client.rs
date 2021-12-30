@@ -60,8 +60,8 @@ mod test {
     use fake::faker::internet::en::SafeEmail;
     use fake::faker::lorem::en::{Paragraph, Sentence};
     use fake::{Fake, Faker};
-    use wiremock::matchers::any;
     use wiremock::{Mock, MockServer, ResponseTemplate};
+    use wiremock::matchers::{header, header_exists, path, method};
 
     #[tokio::test]
     async fn send_email_fires_a_request_to_base_url() {
@@ -69,7 +69,10 @@ mod test {
         let mock_server = MockServer::start().await;
         let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
         let email_client = EmailClient::new(mock_server.uri(), sender, Faker.fake());
-        Mock::given(any())
+        Mock::given(header_exists("X-Postmark-Server-Token"))
+            .and(header("Content-Type", "application/json"))
+            .and(path("/email"))
+            .and(method("POST"))
             .respond_with(ResponseTemplate::new(200))
             .expect(1)
             .mount(&mock_server)
