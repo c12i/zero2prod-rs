@@ -21,15 +21,12 @@ pub struct EmailClient {
 
 impl EmailClient {
     pub fn new(
-        base_url: String, 
+        base_url: String,
         sender: SubscriberEmail,
         authorization_token: String,
         timeout: std::time::Duration,
     ) -> Self {
-        let http_client = Client::builder()
-            .timeout(timeout)
-            .build()
-            .unwrap();
+        let http_client = Client::builder().timeout(timeout).build().unwrap();
         Self {
             http_client,
             base_url,
@@ -190,6 +187,11 @@ mod test {
 
     /// Get a test instance of `EmailClient`.
     fn email_client(base_url: String) -> EmailClient {
-        EmailClient::new(base_url, email(), Faker.fake(), std::time::Duration::from_millis(200))
+        EmailClient::new(
+            base_url,
+            email(),
+            Faker.fake(),
+            std::time::Duration::from_millis(200),
+        )
     }
 }
