@@ -20,9 +20,14 @@ pub struct EmailClient {
 }
 
 impl EmailClient {
-    pub fn new(base_url: String, sender: SubscriberEmail, authorization_token: String) -> Self {
+    pub fn new(
+        base_url: String, 
+        sender: SubscriberEmail,
+        authorization_token: String,
+        timeout: std::time::Duration,
+    ) -> Self {
         let http_client = Client::builder()
-            .timeout(std::time::Duration::from_secs(10))
+            .timeout(timeout)
             .build()
             .unwrap();
         Self {
@@ -96,8 +101,6 @@ mod test {
     async fn send_email_sends_the_expected_request() {
         // Arrange
         let mock_server = MockServer::start().await;
-        let sender = SubscriberEmail::parse(SafeEmail().fake()).unwrap();
-        let email_client = EmailClient::new(mock_server.uri(), sender, Faker.fake());
         Mock::given(header_exists("X-Postmark-Server-Token"))
             .and(header("Content-Type", "application/json"))
             .and(path("/email"))
@@ -108,7 +111,7 @@ mod test {
             .mount(&mock_server)
             .await;
         // Act
-        let _ = email_client
+        let _ = email_client(mock_server.uri())
             .send_email(email(), &subject(), &content(), &content())
             .await;
     }
@@ -187,6 +190,6 @@ mod test {
 
     /// Get a test instance of `EmailClient`.
     fn email_client(base_url: String) -> EmailClient {
-        EmailClient::new(base_url, email(), Faker.fake())
+        EmailClient::new(base_url, email(), Faker.fake(), std::time::Duration::from_millis(200))
     }
 }
