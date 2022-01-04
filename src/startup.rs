@@ -9,6 +9,10 @@ use crate::{
     routes::{health_check, subscribe},
 };
 
+fn not_found() -> HttpResponse {
+    HttpResponse::NotFound().finish()
+}
+
 pub fn run(
     listener: TcpListener,
     db_connection_pool: PgPool,
@@ -23,7 +27,7 @@ pub fn run(
             .route("/subscriptions", web::post().to(subscribe))
             .app_data(db_connection_pool.clone())
             .app_data(email_client.clone())
-            .default_service(web::route().to(|| HttpResponse::NotFound()))
+            .default_service(web::route().to(not_found))
     })
     .listen(listener)?
     .run();
