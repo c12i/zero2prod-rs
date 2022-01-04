@@ -1,6 +1,6 @@
 use std::net::TcpListener;
 
-use actix_web::{dev::Server, web, App, HttpServer};
+use actix_web::{dev::Server, web, App, HttpResponse, HttpServer};
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
 
@@ -23,6 +23,7 @@ pub fn run(
             .route("/subscriptions", web::post().to(subscribe))
             .app_data(db_connection_pool.clone())
             .app_data(email_client.clone())
+            .default_service(web::route().to(|| HttpResponse::NotFound()))
     })
     .listen(listener)?
     .run();
