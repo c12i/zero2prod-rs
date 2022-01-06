@@ -40,7 +40,7 @@ impl Application {
         let listener = TcpListener::bind(&address)?;
         // Get the bound port
         let port = listener.local_addr().unwrap().port();
-        let server = run(listener, db_connection_pool, email_client)?;
+        let server = Application::create_server(listener, db_connection_pool, email_client)?;
         // Save the bound port in the `Application` fields
         Ok(Self { port, server })
     }
@@ -58,34 +58,30 @@ impl Application {
         self.port
     }
 
+    fn create_server(
+        listener: TcpListener,
+        db_connection_pool: PgPool,
+        email_client: EmailClient,
+    ) -> Result<Server, std::io::Error> {
+        let db_connection_pool = web::Data::new(db_connection_pool);
+        let email_client = web::Data::new(email_client);
+        let server = HttpServer::new(move || {
+            App::new()
+                .wrap(TracingLogger::default())
+                .route("/healthz", web::get().to(health_check))
+                .route("/subscriptions", web::post().to(subscribe))
+                .app_data(db_connection_pool.clone())
+                .app_data(email_client.clone())
+                .default_service(web::route().to(|| HttpResponse::NotFound().finish()))
+        })
+        .listen(listener)?
+        .run();
+        Ok(server)
+    }
+
     // A more expressive name that makes it clear that this function only returns when
     // the application is stopped
     pub async fn run_server_until_stopped(self) -> Result<(), std::io::Error> {
         self.server.await
     }
-}
-
-fn not_found() -> HttpResponse {
-    HttpResponse::NotFound().finish()
-}
-
-pub fn run(
-    listener: TcpListener,
-    db_connection_pool: PgPool,
-    email_client: EmailClient,
-) -> Result<Server, std::io::Error> {
-    let db_connection_pool = web::Data::new(db_connection_pool);
-    let email_client = web::Data::new(email_client);
-    let server = HttpServer::new(move || {
-        App::new()
-            .wrap(TracingLogger::default())
-            .route("/healthz", web::get().to(health_check))
-            .route("/subscriptions", web::post().to(subscribe))
-            .app_data(db_connection_pool.clone())
-            .app_data(email_client.clone())
-            .default_service(web::route().to(not_found))
-    })
-    .listen(listener)?
-    .run();
-    Ok(server)
 }
