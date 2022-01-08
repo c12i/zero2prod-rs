@@ -3,6 +3,7 @@ name = "z2p"
 version = "0.1.0"
 authors = ["Collins Muriuki <hello@collinsmuriuki.xyz>"]
 edition = "2018"
+precommit = {fmt = "cargo fmt 2>&1", test = "cargo test 2>&1"}
 
 [lib]
 path = "src/lib.rs"
@@ -53,7 +54,3 @@ quickcheck_macros = "0.9.1"
 serde_json = "1"
 tokio = {version = "1", features = ["rt", "macros"]}
 wiremock = "0.5"
-
-[package.metadata.precommit]
-fmt = "cargo fmt 2>&1"
-test = "cargo test 2>&1"
