@@ -4,6 +4,7 @@ use sqlx::PgPool;
 use std::convert::{TryFrom, TryInto};
 
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
+use crate::email_client::EmailClient;
 
 #[derive(Deserialize)]
 pub struct FormData {
@@ -25,13 +26,14 @@ impl TryFrom<FormData> for NewSubscriber {
 
 #[tracing::instrument(
     name = "Adding a new subscriber",
-    skip(form, connection_pool),
+    skip(form, connection_pool, email_client),
     fields(subsciber_email = %form.email, subsciber_name = %form.name)
 )]
 #[allow(clippy::async_yields_async)]
 pub async fn subscribe(
     form: web::Form<FormData>,
     connection_pool: web::Data<PgPool>,
+    email_client: web::Data<EmailClient>,
 ) -> HttpResponse {
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
@@ -39,10 +41,27 @@ pub async fn subscribe(
         Ok(sub) => sub,
         Err(_) => return HttpResponse::BadRequest().finish(),
     };
-    match insert_subscriber(&connection_pool, &new_subscriber).await {
-        Ok(_) => HttpResponse::Ok().finish(),
-        Err(_) => HttpResponse::InternalServerError().finish(),
+    if insert_subscriber(&connection_pool, &new_subscriber)
+        .await
+        .is_err()
+    {
+        return HttpResponse::InternalServerError().finish();
     }
+    // XXX: Send a useless email to the new user for now
+    //      We are also ignoring derlivery errors too
+    if email_client
+        .send_email(
+            new_subscriber.email,
+            "Welcome",
+            "Welcome to the newsletter",
+            "Welcome to the newsletter",
+        )
+        .await
+        .is_err()
+    {
+        return HttpResponse::InternalServerError().finish();
+    }
+    HttpResponse::Ok().finish()
 }
 
 #[tracing::instrument(
