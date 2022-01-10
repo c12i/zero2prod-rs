@@ -66,7 +66,7 @@ async fn insert_subscriber(
     .execute(connection_pool)
     .await
     .map_err(|e| {
-        tracing::error!("Error executingg query: {:?}", e);
+        tracing::error!("Error executing query: {:?}", e);
         e
     })?;
     Ok(())
