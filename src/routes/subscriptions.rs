@@ -49,12 +49,20 @@ pub async fn subscribe(
     }
     // XXX: Send a useless email to the new user for now
     //      We are also ignoring derlivery errors too
+    let confirmation_link = "https://my-api.com/subscriptions/confirm";
     if email_client
         .send_email(
             new_subscriber.email,
             "Welcome",
-            "Welcome to the newsletter",
-            "Welcome to the newsletter",
+            &format!(
+                "Welcome to our newsletter!<br />\
+                Click <a href=\"{}\">here</a> to confirm your subscription.",
+                confirmation_link
+            ),
+            &format!(
+                "Welcome to our newsletter!\nVisit {} to confirm your subscription.",
+                confirmation_link
+            ),
         )
         .await
         .is_err()
