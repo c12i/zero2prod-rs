@@ -2711,6 +2711,7 @@ dependencies = [
  "pre-commit",
  "quickcheck",
  "quickcheck_macros",
+ "rand 0.8.4",
  "reqwest",
  "serde 1.0.126",
  "serde-aux",
