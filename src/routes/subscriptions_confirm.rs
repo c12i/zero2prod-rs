@@ -57,7 +57,7 @@ pub async fn confirm_subscriber(
 ) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
-				UPDATE subscriptions SET status = 'confirmed' WHERE id = $1
+			UPDATE subscriptions SET status = 'confirmed' WHERE id = $1
 		"#,
         subscriber_id,
     )
