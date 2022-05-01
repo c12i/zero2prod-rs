@@ -11,6 +11,7 @@ pub struct Parameters {
 	name = "Confirm a pending subscriber"
 	skip(parameters)
 )]
+#[allow(clippy::async_yields_async)]
 pub async fn confirm(parameters: web::Query<Parameters>, pool: web::Data<PgPool>) -> HttpResponse {
     let result = match get_subscriber_id_from_token(&pool, &parameters.subscription_token).await {
         Ok(id) => id,
