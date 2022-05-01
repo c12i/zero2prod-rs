@@ -4,7 +4,7 @@ use rand::{thread_rng, Rng};
 use serde::Deserialize;
 use sqlx::{PgPool, Postgres, Transaction};
 use std::convert::{TryFrom, TryInto};
-use std::fmt::Display;
+use std::fmt::{Display, Debug};
 
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
 use crate::email_client::EmailClient;
@@ -160,8 +160,13 @@ pub async fn store_token(
     Ok(())
 }
 
-#[derive(Debug)]
 pub struct StoreTokenError(sqlx::Error);
+
+impl Debug for StoreTokenError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}\nCaused by:\n\t{}", self, self.0)
+    }
+}
 
 impl Display for StoreTokenError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
