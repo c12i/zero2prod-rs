@@ -158,7 +158,19 @@ pub async fn store_token(
     Ok(())
 }
 
+#[derive(thiserror::Error)]
+pub enum SubscribeError {
+    #[error("{0}")]
+    ValidationError(String),
+    // Transparent delegates both `Display`'s and `source`'s implementation
+    // to the type wrapped by `UnexpectedError`.
+    #[error(transparent)]
+    UnexpectedError(#[from] anyhow::Error),
+}
+
 pub struct StoreTokenError(sqlx::Error);
+
+impl ResponseError for StoreTokenError {}
 
 fn error_chain_fmt(
     e: &impl std::error::Error,
@@ -189,23 +201,11 @@ impl Display for StoreTokenError {
     }
 }
 
-impl ResponseError for StoreTokenError {}
-
 impl std::error::Error for StoreTokenError {
     fn source(&self) -> Option<&(dyn std::error::Error + 'static)> {
         // the compiler transparently casts &sqlx::Error into a &dyn Error
         Some(&self.0)
     }
-}
-
-#[derive(thiserror::Error)]
-pub enum SubscribeError {
-    #[error("{0}")]
-    ValidationError(String),
-    // Transparent delegates both `Display`'s and `source`'s implementation
-    // to the type wrapped by `UnexpectedError`.
-    #[error(transparent)]
-    UnexpectedError(#[from] anyhow::Error),
 }
 
 impl std::fmt::Debug for SubscribeError {
