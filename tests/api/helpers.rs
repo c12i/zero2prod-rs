@@ -42,7 +42,7 @@ impl TestApp {
             .expect("Failed to execute the request")
     }
 
-    // Extract the confirmationn links embedded in the request to the email API
+    // Extract the confirmation links embedded in the request to the email API
     pub fn get_confirmation_links(&self, email_request: &wiremock::Request) -> ConfirmationLinks {
         let body: serde_json::Value = serde_json::from_slice(&email_request.body).unwrap();
         // Extract the link from one of the request fields.
