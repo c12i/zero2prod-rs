@@ -1,4 +1,4 @@
-use crate::helpers::{spawn_app, TestApp, ConfirmationLinks};
+use crate::helpers::{spawn_app, ConfirmationLinks, TestApp};
 use wiremock::matchers::{any, method, path};
 use wiremock::{Mock, ResponseTemplate};
 
@@ -108,11 +108,21 @@ async fn create_unconfirmed_subscriber(app: &TestApp) -> ConfirmationLinks {
         .await
         .error_for_status()
         .unwrap();
-    let email_request = &app.email_server.received_requests().await.unwrap().pop().unwrap();
+    let email_request = &app
+        .email_server
+        .received_requests()
+        .await
+        .unwrap()
+        .pop()
+        .unwrap();
     app.get_confirmation_links(&email_request)
 }
 
 async fn create_confirmed_subscriber(app: &TestApp) {
     let confirmation_link = create_unconfirmed_subscriber(app).await;
-    reqwest::get(confirmation_link.html).await.unwrap().error_for_status().unwrap();
+    reqwest::get(confirmation_link.html)
+        .await
+        .unwrap()
+        .error_for_status()
+        .unwrap();
 }

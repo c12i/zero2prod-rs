@@ -8,10 +8,10 @@ pub async fn publish_newsletter(_body: web::Json<BodyData>) -> HttpResponse {
 #[derive(Deserialize)]
 pub struct BodyData {
     title: String,
-    content: Content
+    content: Content,
 }
 #[derive(Deserialize)]
 pub struct Content {
     html: String,
-    text: String
+    text: String,
 }
