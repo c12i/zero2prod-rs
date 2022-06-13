@@ -46,31 +46,20 @@ struct ConfirmedSubscriber {
 async fn get_confirmed_subscribers(
     pool: &PgPool,
 ) -> Result<Vec<Result<ConfirmedSubscriber, anyhow::Error>>, anyhow::Error> {
-    // We only need `Row` to map the data coming out of this query.
-    // Nesting its definition inside the function itself is a simple way
-    // to clearly communicate this coupling (and to ensure it doesn't
-    // get used elsewhere by mistake).
-    struct Row {
-        email: String,
-    }
-
-    let rows = sqlx::query_as!(
-        Row,
+    let confirmed_subscribers = sqlx::query!(
         r#"
         SELECT email FROM subscriptions
         WHERE status = 'confirmed'
         "#
     )
     .fetch_all(pool)
-    .await?;
-    // Map into the domain type
-    let confirmed_subscribers = rows
-        .into_iter()
-        .map(|r| match SubscriberEmail::parse(r.email) {
-            Ok(email) => Ok(ConfirmedSubscriber { email }),
-            Err(error) => Err(anyhow::anyhow!(error)),
-        })
-        .collect();
+    .await?
+    .into_iter()
+    .map(|r| match SubscriberEmail::parse(r.email) {
+        Ok(email) => Ok(ConfirmedSubscriber { email }),
+        Err(error) => Err(anyhow::anyhow!(error)),
+    })
+    .collect();
     Ok(confirmed_subscribers)
 }
 
