@@ -1,4 +1,5 @@
 use once_cell::sync::Lazy;
+use sha3::Digest;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use uuid::Uuid;
 use wiremock::MockServer;
@@ -19,17 +20,52 @@ static TRACING: Lazy<()> = Lazy::new(|| {
     }
 });
 
+// spawn app and return bound TCP address
+pub async fn spawn_app() -> TestApp {
+    // The first time `initialize` is invoked, the code in `TRACING` is executed
+    // all other invocations will skip the execution
+    Lazy::force(&TRACING);
+    // Launch a mock server to stand in for Postmark's API
+    let email_server = MockServer::start().await;
+    let configuration = {
+        let mut c = get_configuration().expect("Error reading configurations");
+        // overriding database name to a randonm uuid
+        c.database.database_name = uuid::Uuid::new_v4().to_string();
+        // override port to a random OS port
+        c.application.port = 0;
+        // Use mock server as email api url
+        c.email_client.base_url = email_server.uri();
+        c
+    };
+    // create and migrate database
+    configure_database(&configuration.database).await;
+    // launch application as a background task
+    let application = Application::build(configuration.clone())
+        .await
+        .expect("Failed to build application");
+    let application_port = application.port();
+    let address = format!("http://127.0.0.1:{}", application_port);
+    let db_pool = Application::get_connection_pool(&configuration.database)
+        .await
+        .expect("Failed to connect to database");
+    let _ = tokio::spawn(application.run_server_until_stopped());
+    let test_app = TestApp {
+        address,
+        db_pool,
+        email_server,
+        port: application_port,
+        test_user: TestUser::generate(),
+    };
+    test_app.test_user.store(&test_app.db_pool).await;
+    test_app
+}
+
 pub struct TestApp {
     pub address: String,
     pub port: u16,
     pub db_pool: PgPool,
     pub email_server: MockServer,
-}
-
-// Confirmation linkjs embedded in the request to the email API
-pub struct ConfirmationLinks {
-    pub html: reqwest::Url,
-    pub plain_text: reqwest::Url,
+    test_user: TestUser,
 }
 
 impl TestApp {
@@ -66,75 +102,50 @@ impl TestApp {
     }
 
     pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
-        let (username, password) = self.test_user().await;
         reqwest::Client::new()
             .post(&format!("{}/newsletters", &self.address))
-            .basic_auth(username, Some(password))
+            .basic_auth(&self.test_user.username, Some(&self.test_user.password))
             .json(&body)
             .send()
             .await
             .expect("Failed to execute request.")
     }
+}
 
-    pub async fn test_user(&self) -> (String, String) {
-        let row = sqlx::query!("SELECT username, password FROM users LIMIT 1",)
-            .fetch_one(&self.db_pool)
-            .await
-            .expect("Failed to create test users.");
-        (row.username, row.password)
+// Confirmation links embedded in the request to the email API
+pub struct ConfirmationLinks {
+    pub html: reqwest::Url,
+    pub plain_text: reqwest::Url,
+}
+
+struct TestUser {
+    pub user_id: Uuid,
+    pub username: String,
+    pub password: String,
+}
+
+impl TestUser {
+    pub fn generate() -> Self {
+        Self {
+            user_id: Uuid::new_v4(),
+            username: Uuid::new_v4().to_string(),
+            password: Uuid::new_v4().to_string(),
+        }
     }
-}
 
-// spawn app and return bound TCP address
-pub async fn spawn_app() -> TestApp {
-    // The first time `initialize` is invoked, the code in `TRACING` is executed
-    // all other invocations will skip the execution
-    Lazy::force(&TRACING);
-    // Launch a mock server to stand in for Postmark's API
-    let email_server = MockServer::start().await;
-    let configuration = {
-        let mut c = get_configuration().expect("Error reading configurations");
-        // overriding database name to a randonm uuid
-        c.database.database_name = uuid::Uuid::new_v4().to_string();
-        // override port to a random OS port
-        c.application.port = 0;
-        // Use mock server as email api url
-        c.email_client.base_url = email_server.uri();
-        c
-    };
-    // create and migrate database
-    configure_database(&configuration.database).await;
-    // launch application as a background task
-    let application = Application::build(configuration.clone())
+    async fn store(&self, pool: &PgPool) {
+        let password_hash = sha3::Sha3_256::digest(self.password.as_bytes());
+        let password_hash = format!("{:x}", password_hash);
+        sqlx::query!(
+            "INSERT INTO users (user_id, username, password_hash) VALUES ($1, $2, $3)",
+            self.user_id,
+            self.username,
+            password_hash
+        )
+        .execute(pool)
         .await
-        .expect("Failed to build application");
-    let application_port = application.port();
-    let address = format!("http://127.0.0.1:{}", application_port);
-    let db_pool = Application::get_connection_pool(&configuration.database)
-        .await
-        .expect("Failed to connect to database");
-    let _ = tokio::spawn(application.run_server_until_stopped());
-    let test_app = TestApp {
-        address,
-        db_pool,
-        email_server,
-        port: application_port,
-    };
-    add_test_user(&test_app.db_pool).await;
-    test_app
-}
-
-async fn add_test_user(pool: &PgPool) {
-    sqlx::query!(
-        "INSERT INTO users (user_id, username, password)
-        VALUES ($1, $2, $3)",
-        Uuid::new_v4(),
-        Uuid::new_v4().to_string(),
-        Uuid::new_v4().to_string(),
-    )
-    .execute(pool)
-    .await
-    .expect("Failed to create test users.");
+        .expect("Failed to store test user.");
+    }
 }
 
 async fn configure_database(config: &DatabaseSettings) -> PgPool {
