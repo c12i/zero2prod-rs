@@ -80,7 +80,10 @@ jobs:
           SKIP_DOCKER=true ./scripts/init_db.sh
 
       - name: Check sqlx metadata file
+        # Fix failing cargo sqlx prepare runs by initially running cargo clean
+        # https://github.com/launchbadge/sqlx/issues/788
         run: |
+          cargo clean
           cargo sqlx prepare --check -- --bin z2p
 
       - name: Run cargo test
