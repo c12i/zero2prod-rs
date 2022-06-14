@@ -83,7 +83,6 @@ jobs:
         # Fix failing cargo sqlx prepare runs by initially running cargo clean
         # https://github.com/launchbadge/sqlx/issues/788
         run: |
-          cargo clean
           cargo sqlx prepare --check -- --bin z2p
 
       - name: Run cargo test
