@@ -12,6 +12,27 @@
       "nullable": []
     }
   },
+  "2998b2efb2ea4c121816981aa7cca16a6988462df79f4b29a8c767d228a63488": {
+    "query": "\n        SELECT user_id\n        FROM users\n        WHERE username = $1 AND password_hash = $2\n        ",
+    "describe": {
+      "columns": [
+        {
+          "ordinal": 0,
+          "name": "user_id",
+          "type_info": "Uuid"
+        }
+      ],
+      "parameters": {
+        "Left": [
+          "Text",
+          "Text"
+        ]
+      },
+      "nullable": [
+        false
+      ]
+    }
+  },
   "53f1d6ca30961dbe8669e70a8dc104dc5c0d8deefc9cc7c27bd0a78701a469ea": {
     "query": "\n\t\tSELECT subscriber_id FROM subscription_tokens WHERE subscription_token = $1\n\t\t",
     "describe": {
@@ -44,27 +65,6 @@
       ],
       "parameters": {
         "Left": []
-      },
-      "nullable": [
-        false
-      ]
-    }
-  },
-  "df5e51c3cbb40ab0f1b52e123a54537961d7390f1edff007b9c12c23c8e3735f": {
-    "query": "\n        SELECT user_id\n        FROM users\n        WHERE username = $1 AND password = $2\n        ",
-    "describe": {
-      "columns": [
-        {
-          "ordinal": 0,
-          "name": "user_id",
-          "type_info": "Uuid"
-        }
-      ],
-      "parameters": {
-        "Left": [
-          "Text",
-          "Text"
-        ]
       },
       "nullable": [
         false
