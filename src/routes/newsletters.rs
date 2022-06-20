@@ -92,8 +92,9 @@ async fn validate_credentials(
         .await
         .map_err(PublishError::UnexpectedError)?
         .ok_or_else(|| PublishError::AuthError(anyhow::anyhow!("Unknown username.")))?;
+    let current_span = tracing::Span::current();
     actix_web::rt::task::spawn_blocking(move || {
-        verify_password_hash(expected_password_hash, credentials.password)
+        current_span.in_scope(|| verify_password_hash(expected_password_hash, credentials.password))
     })
     .await
     // spawn blocking is fallible - we hence have a nested result here
