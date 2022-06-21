@@ -1,3 +1,4 @@
+use actix_web::rt::task::JoinHandle;
 use tracing::{subscriber::set_global_default, Subscriber};
 use tracing_bunyan_formatter::{BunyanFormattingLayer, JsonStorageLayer};
 use tracing_log::LogTracer;
@@ -37,4 +38,13 @@ pub fn initialize_subscriber(subscriber: impl Subscriber + Send + Sync) {
     LogTracer::init().expect("Error setting logger");
     // `set_global_default` can be used by applications to specify what subscriber should be used to process spans
     set_global_default(subscriber).expect("Error getting subscriber");
+}
+
+pub fn spawn_blocking_with_tracing<F, R>(f: F) -> JoinHandle<R>
+where
+    F: FnOnce() -> R + Send + 'static,
+    R: Send + 'static,
+{
+    let current_span = tracing::Span::current();
+    actix_web::rt::task::spawn_blocking(move || current_span.in_scope(f))
 }

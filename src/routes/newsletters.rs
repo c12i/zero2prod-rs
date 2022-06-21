@@ -8,7 +8,10 @@ use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use serde::Deserialize;
 use sqlx::PgPool;
 
-use crate::{domain::SubscriberEmail, email_client::EmailClient, utils::error_chain_fmt};
+use crate::{
+    domain::SubscriberEmail, email_client::EmailClient, telemetry::spawn_blocking_with_tracing,
+    utils::error_chain_fmt,
+};
 
 #[tracing::instrument(
     name = "Publish a newsletter issue",
@@ -92,9 +95,8 @@ async fn validate_credentials(
         .await
         .map_err(PublishError::UnexpectedError)?
         .ok_or_else(|| PublishError::AuthError(anyhow::anyhow!("Unknown username.")))?;
-    let current_span = tracing::Span::current();
-    actix_web::rt::task::spawn_blocking(move || {
-        current_span.in_scope(|| verify_password_hash(expected_password_hash, credentials.password))
+    spawn_blocking_with_tracing(move || {
+        verify_password_hash(expected_password_hash, credentials.password)
     })
     .await
     // spawn blocking is fallible - we hence have a nested result here
