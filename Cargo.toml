@@ -32,6 +32,7 @@ tracing-bunyan-formatter = "0.2.6"
 tracing-futures = "0.2.5"
 tracing-log = "0.1.2"
 tracing-subscriber = {version="0.2.12", features = ["env-filter", "registry"]}
+urlencoding = "2"
 uuid = {version = "0.8.1", features = ["v4"]}
 rand = {version = "0.8", features=["std_rng"]}
 serde-aux = "2.3.0"

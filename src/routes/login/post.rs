@@ -53,10 +53,14 @@ impl std::fmt::Debug for LoginError {
 }
 
 impl ResponseError for LoginError {
-    fn status_code(&self) -> actix_http::StatusCode {
-        match self {
-            LoginError::AuthError(_) => StatusCode::UNAUTHORIZED,
-            LoginError::UnexpectedError(_) => StatusCode::INTERNAL_SERVER_ERROR,
-        }
+    fn error_response(&self) -> HttpResponse {
+        let encode_error = urlencoding::Encoded::new(self.to_string());
+        HttpResponse::build(self.status_code())
+            .insert_header((LOCATION, format!("/login?error={}", encode_error)))
+            .finish()
+    }
+
+    fn status_code(&self) -> StatusCode {
+        StatusCode::SEE_OTHER
     }
 }
