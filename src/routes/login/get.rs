@@ -29,7 +29,7 @@ pub fn login_form(query: web::Query<QueryParams>) -> HttpResponse {
 </body>
 </html>
            "#,
-            error_html
+            htmlescape::encode_minimal(&error_html)
         ))
 }
 
