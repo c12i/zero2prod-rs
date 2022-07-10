@@ -1,9 +1,27 @@
 use actix_web::{http::header::ContentType, web, HttpResponse};
+use hmac::{Hmac, Mac};
+use secrecy::ExposeSecret;
 
-pub fn login_form(query: web::Query<QueryParams>) -> HttpResponse {
-    let error_html = match query.0.error {
+use crate::startup::HmacSecret;
+
+pub fn login_form(
+    query: Option<web::Query<QueryParams>>,
+    secret: web::Data<HmacSecret>,
+) -> HttpResponse {
+    let error_html = match query {
         None => "".into(),
-        Some(error_message) => format!("<p><i>{}</i></p>", error_message),
+        Some(query) => match query.0.verify(&secret) {
+            Ok(error) => {
+                format!("<p><i>{}</i></p>", htmlescape::encode_minimal(&error))
+            }
+            Err(e) => {
+                tracing::warn!(
+                    error.message = %e, error.cause_chain = ?e,
+                    "Failed to verify query parameters using HMAC tag"
+                );
+                "".into()
+            }
+        },
     };
     HttpResponse::Ok()
         .content_type(ContentType::html())
@@ -29,11 +47,24 @@ pub fn login_form(query: web::Query<QueryParams>) -> HttpResponse {
 </body>
 </html>
            "#,
-            htmlescape::encode_minimal(&error_html)
+            error_html
         ))
 }
 
 #[derive(serde::Deserialize)]
 pub struct QueryParams {
-    error: Option<String>,
+    pub error: String,
+    pub tag: String,
+}
+
+impl QueryParams {
+    fn verify(self, secret: &HmacSecret) -> Result<String, anyhow::Error> {
+        let tag = hex::decode(self.tag)?;
+        let query_string = format!("error={}", urlencoding::Encoded::new(&self.error));
+        let mut mac =
+            Hmac::<sha2::Sha256>::new_from_slice(secret.0.expose_secret().as_bytes()).unwrap();
+        mac.update(query_string.as_bytes());
+        mac.verify_slice(&tag)?;
+        Ok(self.error)
+    }
 }
