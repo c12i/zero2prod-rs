@@ -1,6 +1,7 @@
 use std::net::TcpListener;
 
 use actix_web::{dev::Server, web, App, HttpResponse, HttpServer};
+use secrecy::Secret;
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
@@ -49,6 +50,7 @@ impl Application {
             db_connection_pool,
             email_client,
             configuration.application.base_url,
+            HmacSecret(configuration.application.hmac_secret),
         )?;
         // Save the bound port in the `Application` fields
         Ok(Self { port, server })
@@ -72,10 +74,12 @@ impl Application {
         db_connection_pool: PgPool,
         email_client: EmailClient,
         base_url: String,
+        hmac_secret: HmacSecret,
     ) -> Result<Server, std::io::Error> {
         let db_connection_pool = web::Data::new(db_connection_pool);
         let email_client = web::Data::new(email_client);
         let base_url = web::Data::new(ApplicationBaseUrl(base_url));
+        let hmac_secret = web::Data::new(hmac_secret.clone());
         let server = HttpServer::new(move || {
             App::new()
                 .wrap(TracingLogger::default())
@@ -89,6 +93,7 @@ impl Application {
                 .app_data(db_connection_pool.clone())
                 .app_data(email_client.clone())
                 .app_data(base_url.clone())
+                .app_data(hmac_secret.clone())
                 .default_service(web::route().to(|| HttpResponse::NotFound().finish()))
         })
         .listen(listener)?
@@ -102,3 +107,10 @@ impl Application {
         self.server.await
     }
 }
+
+// Using Secret<String> as the type injected into the application state is far from ideal.
+// String is a primitive type and there is a significant risk of conflict - i.e.
+// another middleware or service registering another Secret<String>
+// against the application state, overriding our HMAC secret (or vice versa).
+#[derive(Clone)]
+pub struct HmacSecret(pub Secret<String>);
