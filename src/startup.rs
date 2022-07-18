@@ -79,7 +79,7 @@ impl Application {
         let db_connection_pool = web::Data::new(db_connection_pool);
         let email_client = web::Data::new(email_client);
         let base_url = web::Data::new(ApplicationBaseUrl(base_url));
-        let hmac_secret = web::Data::new(hmac_secret.clone());
+        let hmac_secret = web::Data::new(hmac_secret);
         let server = HttpServer::new(move || {
             App::new()
                 .wrap(TracingLogger::default())
