@@ -1216,9 +1216,9 @@ dependencies = [
 
 [[package]]
 name = "libc"
-version = "0.2.103"
+version = "0.2.126"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dd8f7255a17a627354f321ef0055d63b898c6fb27eff628af4d1b66b7331edf6"
+checksum = "349d5a591cd28b49e1d1037471617a32ddcda5731b99419008085f72d5a53836"
 
 [[package]]
 name = "linked-hash-map"
@@ -2852,6 +2852,7 @@ dependencies = [
  "serde_json",
  "sqlx",
  "thiserror",
+ "time 0.2.27",
  "tokio",
  "tracing",
  "tracing-actix-web",

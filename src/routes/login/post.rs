@@ -1,6 +1,7 @@
 use actix_http::header::LOCATION;
 use actix_web::{cookie::Cookie, error::InternalError, web, HttpResponse};
 use sqlx::PgPool;
+use time::Duration;
 
 use crate::{
     authentication::{validate_credentials, AuthError, Credentials},
@@ -33,7 +34,13 @@ pub async fn login(
             };
             let response = HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/login"))
-                .cookie(Cookie::new("_flash", e.to_string()))
+                .cookie(
+                    Cookie::build("_flash", e.to_string())
+                        // TODO: hack - check latest version of book and see which version
+                        //       of actix_web is in use
+                        .max_age(Duration::seconds(0))
+                        .finish(),
+                )
                 .finish();
             Err(InternalError::from_response(e, response))
         }
