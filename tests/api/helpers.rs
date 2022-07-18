@@ -50,8 +50,14 @@ pub async fn spawn_app() -> TestApp {
         .await
         .expect("Failed to connect to database");
     let _ = tokio::spawn(application.run_server_until_stopped());
+    let client = reqwest::Client::builder()
+        .redirect(reqwest::redirect::Policy::none())
+        .cookie_store(true)
+        .build()
+        .unwrap();
     let test_app = TestApp {
         address,
+        http_client: client,
         db_pool,
         email_server,
         port: application_port,
@@ -63,6 +69,7 @@ pub async fn spawn_app() -> TestApp {
 
 pub struct TestApp {
     pub address: String,
+    pub http_client: reqwest::Client,
     pub port: u16,
     pub db_pool: PgPool,
     pub email_server: MockServer,
@@ -71,7 +78,7 @@ pub struct TestApp {
 
 impl TestApp {
     pub async fn post_subscriptions(&self, body: String) -> reqwest::Response {
-        reqwest::Client::new()
+        self.http_client
             .post(&format!("{}/subscriptions", self.address))
             .header("Content-Type", "application/x-www-form-urlencoded")
             .body(body)
@@ -103,7 +110,7 @@ impl TestApp {
     }
 
     pub async fn post_newsletters(&self, body: serde_json::Value) -> reqwest::Response {
-        reqwest::Client::new()
+        self.http_client
             .post(&format!("{}/newsletters", &self.address))
             .basic_auth(&self.test_user.username, Some(&self.test_user.password))
             .json(&body)
@@ -116,10 +123,7 @@ impl TestApp {
     where
         Body: serde::Serialize,
     {
-        reqwest::Client::builder()
-            .redirect(reqwest::redirect::Policy::none())
-            .build()
-            .unwrap()
+        self.http_client
             .post(&format!("{}/login", &self.address))
             // This `reqwest`` method makes sure that the body is URL-encoded
             // and the 'Content-Type' header is set accordingly
@@ -127,6 +131,17 @@ impl TestApp {
             .send()
             .await
             .expect("Failed to execute request.")
+    }
+
+    pub async fn get_login_html(&self) -> String {
+        self.http_client
+            .get(&format!("{}/login", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request.")
+            .text()
+            .await
+            .unwrap()
     }
 }
 
