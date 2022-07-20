@@ -7,11 +7,9 @@ pub fn login_form(request: HttpRequest) -> HttpResponse {
             format!("<p><i>{}</i></p>", cookie.value())
         }
     };
-    let mut cookie = Cookie::new("_flash", "");
-    cookie.set_max_age(Some(time::Duration::zero()));
-    HttpResponse::Ok()
+    let response = HttpResponse::Ok()
         .content_type(ContentType::html())
-        .cookie(cookie)
+        .del_cookie(&Cookie::new("_flash", ""))
         .body(format!(
             r#"
 <!DOCTYPE html>
@@ -35,5 +33,6 @@ pub fn login_form(request: HttpRequest) -> HttpResponse {
 </html>
            "#,
             error_html
-        ))
+        ));
+    response
 }
