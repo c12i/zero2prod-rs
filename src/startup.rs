@@ -49,7 +49,7 @@ impl Application {
         let listener = TcpListener::bind(&address)?;
         // Get the bound port
         let port = listener.local_addr().unwrap().port();
-        let server = Application::create_server(
+        let server = Application::run(
             listener,
             db_connection_pool,
             email_client,
@@ -73,7 +73,7 @@ impl Application {
         self.port
     }
 
-    fn create_server(
+    fn run(
         listener: TcpListener,
         db_connection_pool: PgPool,
         email_client: EmailClient,
