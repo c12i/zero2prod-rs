@@ -1,4 +1,4 @@
-use actix_http::header::HeaderMap;
+use actix_web::http::header::HeaderMap;
 use anyhow::Context;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
 use sqlx::PgPool;

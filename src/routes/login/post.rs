@@ -1,4 +1,4 @@
-use actix_http::header::LOCATION;
+use actix_web::http::header::LOCATION;
 use actix_web::{cookie::Cookie, error::InternalError, web, HttpResponse};
 use sqlx::PgPool;
 

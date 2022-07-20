@@ -1,7 +1,7 @@
 use std::net::TcpListener;
 
-use actix_web::{dev::Server, web, App, HttpResponse, HttpServer};
-use secrecy::Secret;
+use actix_web::{dev::Server, web, App, HttpServer};
+use secrecy::{ExposeSecret, Secret};
 use sqlx::postgres::PgPoolOptions;
 use sqlx::PgPool;
 use tracing_actix_web::TracingLogger;
@@ -34,7 +34,11 @@ impl Application {
         let email_client = EmailClient::new(
             configuration.email_client.base_url,
             sender_email,
-            configuration.email_client.authorization_token,
+            configuration
+                .email_client
+                .authorization_token
+                .expose_secret()
+                .to_string(),
             timeout,
         );
         // Build `TcpListener`
@@ -60,7 +64,7 @@ impl Application {
         configuration: &DatabaseSettings,
     ) -> Result<PgPool, sqlx::Error> {
         PgPoolOptions::new()
-            .connect_timeout(std::time::Duration::from_secs(2))
+            .acquire_timeout(std::time::Duration::from_secs(2))
             .connect_with(configuration.with_db())
             .await
     }
@@ -94,7 +98,6 @@ impl Application {
                 .app_data(email_client.clone())
                 .app_data(base_url.clone())
                 .app_data(hmac_secret.clone())
-                .default_service(web::route().to(|| HttpResponse::NotFound().finish()))
         })
         .listen(listener)?
         .run();

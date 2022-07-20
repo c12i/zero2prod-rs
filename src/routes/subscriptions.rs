@@ -1,4 +1,4 @@
-use actix_http::StatusCode;
+use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use anyhow::Context;
 use rand::distributions::Alphanumeric;

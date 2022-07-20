@@ -1,5 +1,10 @@
-use actix_http::{header::HeaderValue, StatusCode};
-use actix_web::{http::header, web, HttpResponse, ResponseError};
+use actix_web::{
+    http::{
+        header::{self, HeaderValue},
+        StatusCode,
+    },
+    web, HttpRequest, HttpResponse, ResponseError,
+};
 use anyhow::Context;
 use serde::Deserialize;
 use sqlx::PgPool;
@@ -20,7 +25,7 @@ pub async fn publish_newsletter(
     body: web::Json<BodyData>,
     email_client: web::Data<EmailClient>,
     pool: web::Data<PgPool>,
-    request: web::HttpRequest,
+    request: HttpRequest,
 ) -> Result<HttpResponse, PublishError> {
     let credentials = basic_authentication(request.headers()).map_err(PublishError::AuthError)?;
     tracing::Span::current().record("username", &tracing::field::display(&credentials.username));

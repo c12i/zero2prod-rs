@@ -13,17 +13,17 @@ use tracing_subscriber::{EnvFilter, Registry};
 /// of the returned type which can be complx
 /// We also need to call out that the returned trait object also implements
 /// `Send` and `Sync` to make it possible to pass it to `init_subscriber`
-pub fn get_subscriber(
+pub fn get_subscriber<Sink>(
     name: String,
     env_filter: String,
-    sink: impl MakeWriter + Send + Sync + 'static,
-) -> impl Subscriber + Send + Sync {
-    // fall back to printing all logs at inflo level or above
-    // if RUST_LOG env var has not been set
-    let env_filter = EnvFilter::try_from_default_env()
-        .unwrap_or_else(|_| -> EnvFilter { EnvFilter::new(env_filter) });
+    sink: Sink,
+) -> impl Subscriber + Sync + Send
+where
+    Sink: for<'a> MakeWriter<'a> + Send + Sync + 'static,
+{
+    let env_filter =
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| EnvFilter::new(env_filter));
     let formatting_layer = BunyanFormattingLayer::new(name, sink);
-    // the `with` method is provided by `SubsciberExt`, an extension trait for `Subscriber` exposed by `tracing_subscriber`
     Registry::default()
         .with(env_filter)
         .with(JsonStorageLayer)

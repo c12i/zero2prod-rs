@@ -1,12 +1,18 @@
-use secrecy::Secret;
-use serde::Deserialize;
+use crate::domain::SubscriberEmail;
+use secrecy::{ExposeSecret, Secret};
 use serde_aux::field_attributes::deserialize_number_from_string;
 use sqlx::postgres::{PgConnectOptions, PgSslMode};
+use sqlx::ConnectOptions;
 use std::convert::{TryFrom, TryInto};
 
-use crate::domain::SubscriberEmail;
+#[derive(serde::Deserialize, Clone)]
+pub struct Settings {
+    pub database: DatabaseSettings,
+    pub application: ApplicationSettings,
+    pub email_client: EmailClientSettings,
+}
 
-#[derive(Deserialize, Clone)]
+#[derive(serde::Deserialize, Clone)]
 pub struct ApplicationSettings {
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
@@ -15,23 +21,45 @@ pub struct ApplicationSettings {
     pub hmac_secret: Secret<String>,
 }
 
-#[derive(Deserialize, Clone)]
+#[derive(serde::Deserialize, Clone)]
 pub struct DatabaseSettings {
     pub username: String,
-    pub password: String,
+    pub password: Secret<String>,
     #[serde(deserialize_with = "deserialize_number_from_string")]
     pub port: u16,
     pub host: String,
     pub database_name: String,
-    // Determine if connection is to be encrypted
     pub require_ssl: bool,
 }
 
-#[derive(Deserialize, Clone)]
+impl DatabaseSettings {
+    pub fn without_db(&self) -> PgConnectOptions {
+        let ssl_mode = if self.require_ssl {
+            PgSslMode::Require
+        } else {
+            PgSslMode::Prefer
+        };
+        PgConnectOptions::new()
+            .host(&self.host)
+            .username(&self.username)
+            .password(self.password.expose_secret())
+            .port(self.port)
+            .ssl_mode(ssl_mode)
+    }
+
+    pub fn with_db(&self) -> PgConnectOptions {
+        let mut options = self.without_db().database(&self.database_name);
+        options.log_statements(tracing::log::LevelFilter::Trace);
+        options
+    }
+}
+
+#[derive(serde::Deserialize, Clone)]
 pub struct EmailClientSettings {
     pub base_url: String,
     pub sender_email: String,
-    pub authorization_token: String,
+    pub authorization_token: Secret<String>,
+    #[serde(deserialize_with = "deserialize_number_from_string")]
     pub timeout_milliseconds: u64,
 }
 
@@ -45,13 +73,37 @@ impl EmailClientSettings {
     }
 }
 
-#[derive(Deserialize, Clone)]
-pub struct Settings {
-    pub database: DatabaseSettings,
-    pub application: ApplicationSettings,
-    pub email_client: EmailClientSettings,
+pub fn get_configuration() -> Result<Settings, config::ConfigError> {
+    let base_path = std::env::current_dir().expect("Failed to determine the current directory");
+    let configuration_directory = base_path.join("configurations");
+
+    // Detect the running environment.
+    // Default to `local` if unspecified.
+    let environment: Environment = std::env::var("APP_ENVIRONMENT")
+        .unwrap_or_else(|_| "local".into())
+        .try_into()
+        .expect("Failed to parse APP_ENVIRONMENT.");
+    let environment_filename = format!("{}.yaml", environment.as_str());
+    let settings = config::Config::builder()
+        .add_source(config::File::from(
+            configuration_directory.join("base.yaml"),
+        ))
+        .add_source(config::File::from(
+            configuration_directory.join(&environment_filename),
+        ))
+        // Add in settings from environment variables (with a prefix of APP and '__' as separator)
+        // E.g. `APP_APPLICATION__PORT=5001 would set `Settings.application.port`
+        .add_source(
+            config::Environment::with_prefix("APP")
+                .prefix_separator("_")
+                .separator("__"),
+        )
+        .build()?;
+
+    settings.try_deserialize::<Settings>()
 }
 
+/// The possible runtime environment for our application.
 pub enum Environment {
     Local,
     Production,
@@ -74,70 +126,9 @@ impl TryFrom<String> for Environment {
             "local" => Ok(Self::Local),
             "production" => Ok(Self::Production),
             other => Err(format!(
-                "{}, is not a supported environment; use either local or production",
+                "{} is not a supported environment. Use either `local` or `production`.",
                 other
             )),
         }
     }
-}
-
-impl DatabaseSettings {
-    #[deprecated]
-    pub fn get_connection_string(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.username, self.password, self.host, self.port, self.database_name
-        )
-    }
-
-    #[deprecated]
-    pub fn get_connection_string_without_db(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}",
-            self.username, self.password, self.host, self.port
-        )
-    }
-}
-
-impl DatabaseSettings {
-    pub fn without_db(&self) -> PgConnectOptions {
-        let ssl_mode = if self.require_ssl {
-            PgSslMode::Require
-        } else {
-            // Try encrypted connection and fall back if it fails
-            PgSslMode::Prefer
-        };
-        PgConnectOptions::new()
-            .host(&self.host)
-            .username(&self.username)
-            .password(&self.password)
-            .port(self.port)
-            .ssl_mode(ssl_mode)
-    }
-
-    pub fn with_db(&self) -> PgConnectOptions {
-        self.without_db().database(&self.database_name)
-    }
-}
-
-pub fn get_configuration() -> Result<Settings, config::ConfigError> {
-    let mut settings = config::Config::default();
-    let base_path = std::env::current_dir().expect("Error determining configuration directory");
-    let configurtion_directory = base_path.join("configurations");
-    // Read the defualt/ base confuguration file
-    settings.merge(config::File::from(configurtion_directory.join("base")).required(true))?;
-    // Detect the running environment
-    // default to local is not specified
-    let environment: Environment = std::env::var("APP_ENVIRONMENT")
-        .unwrap_or_else(|_| "local".into())
-        .try_into()
-        .expect("Error parsing APP_ENVIRONMENT");
-    // Layer on the environment specific values
-    settings.merge(
-        config::File::from(configurtion_directory.join(environment.as_str())).required(true),
-    )?;
-    // Add in settings from environmantal variables with a prefix of APP and __ as a separator
-    // E.g `APPLICATION__PORT=5001` would set the `Settings.application.port`
-    settings.merge(config::Environment::with_prefix("app").separator("__"))?;
-    settings.try_into()
 }

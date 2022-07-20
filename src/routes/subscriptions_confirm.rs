@@ -1,6 +1,6 @@
 use std::fmt::Debug;
 
-use actix_http::StatusCode;
+use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use anyhow::Context;
 use serde::Deserialize;
@@ -34,10 +34,7 @@ pub async fn confirm(
     Ok(HttpResponse::Unauthorized().finish())
 }
 
-#[tracing::instrument(
-    "Get subscriber_id from subscription token",
-    skip(subscription_token, pool)
-)]
+#[tracing::instrument(name = "Get subscriber_id from token", skip(subscription_token, pool))]
 pub async fn get_subscriber_id_from_token(
     pool: &PgPool,
     subscription_token: &str,
