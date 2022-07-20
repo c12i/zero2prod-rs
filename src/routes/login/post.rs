@@ -33,11 +33,9 @@ pub async fn login(
             };
             // TODO: Not what Luca did - must be on an old version of actix
             //       hope I won't meet more of these scenarios
-            let mut cookie = Cookie::new("_flash", e.to_string());
-            cookie.set_max_age(Some(time::Duration::second()));
             let response = HttpResponse::SeeOther()
                 .insert_header((LOCATION, "/login"))
-                .cookie(cookie)
+                .cookie(Cookie::new("_flash", e.to_string()))
                 .finish();
             Err(InternalError::from_response(e, response))
         }

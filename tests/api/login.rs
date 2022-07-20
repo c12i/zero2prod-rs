@@ -1,6 +1,3 @@
-use core::time;
-use std::thread;
-
 use crate::helpers::spawn_app;
 
 #[actix_rt::test]
@@ -20,7 +17,6 @@ async fn an_error_flash_message_is_set_on_failure() {
     // Act - Part 2
     let _ = app.get_login_html().await;
     // Act - Part 3 - Reload the login page
-    thread::sleep(time::Duration::from_secs(1));
     let html_page = app.get_login_html().await;
     assert!(!html_page.contains(r#"<p><i>Authentication failed.</i></p>"#));
 }

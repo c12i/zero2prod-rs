@@ -1,4 +1,4 @@
-use actix_web::{http::header::ContentType, HttpRequest, HttpResponse};
+use actix_web::{cookie::Cookie, http::header::ContentType, HttpRequest, HttpResponse};
 
 pub fn login_form(request: HttpRequest) -> HttpResponse {
     let error_html = match request.cookie("_flash") {
@@ -7,8 +7,11 @@ pub fn login_form(request: HttpRequest) -> HttpResponse {
             format!("<p><i>{}</i></p>", cookie.value())
         }
     };
+    let mut cookie = Cookie::new("_flash", "");
+    cookie.set_max_age(Some(time::Duration::zero()));
     HttpResponse::Ok()
         .content_type(ContentType::html())
+        .cookie(cookie)
         .body(format!(
             r#"
 <!DOCTYPE html>
