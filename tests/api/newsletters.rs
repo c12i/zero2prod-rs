@@ -2,7 +2,7 @@ use crate::helpers::{spawn_app, ConfirmationLinks, TestApp};
 use wiremock::matchers::{any, method, path};
 use wiremock::{Mock, ResponseTemplate};
 
-#[actix_rt::test]
+#[tokio::test]
 async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
     // Arrange
     let app = spawn_app().await;
@@ -24,7 +24,7 @@ async fn newsletters_are_not_delivered_to_unconfirmed_subscribers() {
     assert_eq!(response.status().as_u16(), 200)
 }
 
-#[actix_rt::test]
+#[tokio::test]
 async fn newsletters_are_delivered_to_confirmed_subscribers() {
     // Arrange
     let app = spawn_app().await;
@@ -46,7 +46,7 @@ async fn newsletters_are_delivered_to_confirmed_subscribers() {
     assert_eq!(response.status().as_u16(), 200)
 }
 
-#[actix_rt::test]
+#[tokio::test]
 async fn newsletters_returns_400_for_invalid_data() {
     // Arrange
     let app = spawn_app().await;
@@ -78,7 +78,7 @@ async fn newsletters_returns_400_for_invalid_data() {
     }
 }
 
-#[actix_rt::test]
+#[tokio::test]
 async fn requests_missing_authorization_are_rejected() {
     // Arrange
     let app = spawn_app().await;
@@ -104,7 +104,7 @@ async fn requests_missing_authorization_are_rejected() {
     );
 }
 
-#[actix_rt::test]
+#[tokio::test]
 async fn non_existing_user_is_rejected() {
     // Arrange
     let app = spawn_app().await;
@@ -132,7 +132,7 @@ async fn non_existing_user_is_rejected() {
     );
 }
 
-#[actix_rt::test]
+#[tokio::test]
 async fn invalid_password_is_rejected() {
     // Arrange
     let app = spawn_app().await;

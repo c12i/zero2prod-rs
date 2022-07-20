@@ -1,6 +1,6 @@
 use crate::helpers::spawn_app;
 
-#[actix_rt::test]
+#[tokio::test]
 async fn healtz_works() {
     let app = spawn_app().await;
     let client = reqwest::Client::new();

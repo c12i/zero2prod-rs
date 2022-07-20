@@ -1,6 +1,6 @@
 use crate::helpers::spawn_app;
 
-#[actix_rt::test]
+#[tokio::test]
 async fn an_error_flash_message_is_set_on_failure() {
     // Arrange
     let app = spawn_app().await;
