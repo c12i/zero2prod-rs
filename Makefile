@@ -1,3 +1,6 @@
+run:
+	cargo run
+
 .SILENT:
 start-database:
 	./scripts/init_db.sh
@@ -11,5 +14,3 @@ check:
 build-image:
 	docker build -t z2p .
 
-run:
-	cargo run
