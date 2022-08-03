@@ -1,4 +1,4 @@
-use crate::helpers::spawn_app;
+use crate::helpers::{assert_is_redirect_to, spawn_app};
 
 #[tokio::test]
 async fn an_error_flash_message_is_set_on_failure() {
@@ -35,12 +35,6 @@ pub async fn redirects_to_admin_dashboard_after_login_success() {
     assert_is_redirect_to(&response, "/admin/dashboard");
     // Act: part 2 - follow the redirect
     // FIXME
-    // let html_page = app.get_admin_dashboard().await;
+    // let html_page = app.get_admin_dashboard_html().await;
     // assert!(!html_page.contains(&format!("Welcome {}", app.test_user.username)));
-}
-
-// Helper function - this check is needed several times through out our tests
-pub fn assert_is_redirect_to(response: &reqwest::Response, location: &str) {
-    assert_eq!(response.status().as_u16(), 303);
-    assert_eq!(response.headers().get("Location").unwrap(), location);
 }
