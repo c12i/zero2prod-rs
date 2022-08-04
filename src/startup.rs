@@ -14,7 +14,8 @@ use tracing_actix_web::TracingLogger;
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::email_client::EmailClient;
 use crate::routes::{
-    admin_dashboard, confirm, health_check, home, login, login_form, publish_newsletter, subscribe,
+    admin_dashboard, change_password, change_password_form, confirm, health_check, home, login,
+    login_form, publish_newsletter, subscribe,
 };
 
 pub struct Application {
@@ -112,6 +113,8 @@ impl Application {
                 .route("/login", web::post().to(login))
                 .route("/", web::get().to(home))
                 .route("/admin/dashboard", web::get().to(admin_dashboard))
+                .route("/admin/password", web::get().to(change_password_form))
+                .route("/admin/password", web::get().to(change_password))
                 .app_data(db_connection_pool.clone())
                 .app_data(email_client.clone())
                 .app_data(base_url.clone())
