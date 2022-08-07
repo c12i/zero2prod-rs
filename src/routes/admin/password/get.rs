@@ -6,11 +6,14 @@ use std::fmt::Write;
 use crate::session_state::TypedSession;
 use crate::utils::{e500, see_other};
 
-pub async fn change_password_form(session: TypedSession, flash_messages: IncomingFlashMessages) -> Result<HttpResponse, actix_web::Error> {
+pub async fn change_password_form(
+    session: TypedSession,
+    flash_messages: IncomingFlashMessages,
+) -> Result<HttpResponse, actix_web::Error> {
     if session.get_user_id().map_err(e500)?.is_none() {
         return Ok(see_other("/login"));
     };
-		let mut msg_html = String::new();
+    let mut msg_html = String::new();
     for m in flash_messages.iter() {
         writeln!(msg_html, "<p><i>{}</i></p>", m.content()).unwrap();
     }
