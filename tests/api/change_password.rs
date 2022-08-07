@@ -96,3 +96,24 @@ async fn current_password_must_be_valid() {
     // FIXME
     // assert!(html_page.contains("<p><i>The current password is incorrect.</i></p>"));
 }
+
+#[tokio::test]
+async fn new_password_must_be_greater_than_12_characters_but_less_than_128_characters() {
+    // Arrange
+    let app = spawn_app().await;
+    // Act - Part 1 - Try to change the password
+    let response = app
+        .post_change_password(&serde_json::json!({
+            "current_password": &app.test_user.password,
+            "new_password": "foo",
+            "new_password_check": "foo",
+        }))
+        .await;
+    // Assert
+    // FIXME
+    // assert_is_redirect_to(&response, "/admin/password");
+    // Act - Part 2 - Follow the redirect
+    let html_page = app.get_change_password_html().await;
+    // FIXME
+    // assert!(html_page.contains("<p><i>The password you entered is too short or too long.</i></p>"));
+}
