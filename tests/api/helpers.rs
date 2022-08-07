@@ -164,6 +164,10 @@ impl TestApp {
             .expect("Failed to execute request.")
     }
 
+    pub async fn get_change_password_html(&self) -> String {
+        self.get_change_password().await.text().await.unwrap()
+    }
+
     pub async fn post_change_password<Body>(&self, body: &Body) -> reqwest::Response
     where
         Body: serde::Serialize,
@@ -183,8 +187,9 @@ pub struct ConfirmationLinks {
     pub plain_text: reqwest::Url,
 }
 
+#[derive(Debug)]
 pub struct TestUser {
-    pub user_id: Uuid,
+    user_id: Uuid,
     pub username: String,
     pub password: String,
 }
@@ -230,7 +235,6 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .execute(&*format!(r#"CREATE DATABASE "{}";"#, config.database_name))
         .await
         .expect("Failed to create database.");
-
     // Migrate database
     let connection_pool = PgPool::connect_with(config.with_db())
         .await
@@ -239,7 +243,6 @@ async fn configure_database(config: &DatabaseSettings) -> PgPool {
         .run(&connection_pool)
         .await
         .expect("Failed to migrate the database");
-
     connection_pool
 }
 
