@@ -45,10 +45,8 @@ pub async fn change_password(
             }
             AuthError::UnexpectedError(_) => Err(e500(e).into()),
         };
-    } else {
-        // FIXME
-        unimplemented!()
     }
+    todo!()
 }
 
 #[derive(serde::Deserialize)]
